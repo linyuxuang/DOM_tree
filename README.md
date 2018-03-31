@@ -431,6 +431,232 @@ dom树_删除，添加，修改
 
 
 
+   连接数据库的dom树，增，删，改
+          
+                      <link href="{{APP_JS_PATH}}jqueryztree/metroStyle2/metroStyle.css"  type="text/css" rel="stylesheet">
+                      <script src="{{APP_JS_PATH}}jqueryztree/jquery.ztree.all.min.js"></script>
+                      <script src="{{APP_JS_PATH}}jqueryztree/jquery.ztree.core.min.js"></script>
+                      <script src="{{APP_JS_PATH}}jqueryztree/jquery.ztree.excheck.min.js"></script>
+                      <script src="{{APP_JS_PATH}}jqueryztree/jquery.ztree.exedit.min.js"></script>
+                      <script src="{{APP_JS_PATH}}jqueryztree/jquery.ztree.exhide.min.js"></script>
+                            <style>
+                                .content_lefts{
+                                    background: #FFFFFF;
+                                    margin: 9px 12px 0 9px;
+                                }
+                                .titles_nav{
+                                    width: 100%;
+                                    height: 60px;
+                                    background: #fff;
+                                    border-bottom: 1px solid #ebebeb;
+                                    box-sizing: border-box;
+                                }
+                                .titles_nav_top{
+                                    margin-left: 13px;
+
+                                }
+                               .titles_nav_top li{
+                                   float: left;
+                                   color: red;
+                                   margin-left: 6px;
+                                   margin-top: 19px;
+                                   color: #000000;
+                               }
+                                .content_wrap{
+                                    margin-left: 50px;
+                                    margin-top: 20px;
+                                }
+                                .zTreeDemoBackground{
+                                    text-align: center;
+                                    background:#fff
+                                }
+                                .ztree{
+                                    overflow-y: auto
+                                }
+                            </style>
+                            <div class="content_lefts">
+                                <div class="titles_nav">
+                                   <ul class="titles_nav_top">
+                                       <li><img src="{{APP_IMG_PATH}}cpe/title.jpg"></li>
+                                       <li style="font-size: 16px;font-weight: 600;">位置设定</li>
+                                       <li style="color: #B5B5B5"> &nbsp;<span style="color: red">*</span>创建分类名称建议15个中文字符以内</li>
+                                   </ul>
+                                </div>
+                                <div class="content_wrap">
+                                    <div class="zTreeDemoBackground">
+                                        <ul id="tree" class="ztree"></ul>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <script type="text/javascript">
+                                    $(function(){
+                                        $('.content_lefts').css("height",($(window).height()-120)+"px");
+                                        $(".ztree").css("height",($(window).height()-220)+"px");
+                                    });
+                                var setting = {
+                                    view: {
+                                        addHoverDom: addHoverDom, //当鼠标移动到节点上时，显示用户自定义控件
+                                        removeHoverDom: removeHoverDom, //离开节点时的操作
+                                    },
+                                    async: {
+                                        enable: true,
+                                        url:"{{APP_SERVER}}Tree/getchilds",
+                                        autoParam:["id"],
+                                        dataFilter: filter,
+                                        dataType:"json",
+                                        type:"post"
+                                    },
+                                    edit: {
+                                        enable: true, //单独设置为true时，可加载修改、删除图标
+                                        editNameSelectAll: true,
+                                        showRemoveBtn: setRemoveBtn,    // 不能删除父节点
+                                        showRenameBtn: showRenameBtn    //编辑
+                                    },
+                                    data: {
+                                        simpleData: {
+                                            enable: true,
+                                            idKey: "id",
+                                            pIdKey: "pId",
+                                            system:"system",
+                                            rootPId: ""
+                                        }
+                                    },
+                                    callback: {
+                                        onRemove: onRemove, //移除事件
+                                        onRename: onRename, //修改事件
+                                    }
+                                };
+                                    $(document).ready(function(){
+                                        $.fn.zTree.init($("#tree"), setting);
+                                    });
+                                    function filter(treeId, parentNode, childNodes) {
+                                        console.log(childNodes);
+                                        if(childNodes.code == 0){
+                                            childNodes = childNodes.data.list;
+                                            if(childNodes!=""){
+                                                return childNodes;
+                                            }else{
+                                                return false;
+                                            }
+                                        }else{
+                                            if(childNodes.code == 405500){
+                                                window.location.href = "{{APP_SERVER}}Home/shop";
+                                            }else{
+                                                show_message("error",childNodes.msg,1000);
+                                            }
+                                        }
+                                    }
+                               // 不能删除父节点
+                                    function setRemoveBtn(treeId, treeNode) {
+                                      //  alert(treeNode.level)
+                                        if( treeNode.level == 0) {
+                                            return false;
+                                        }else if(treeNode.level == 1){
+                                            return false;
+                                        }
+                                        else {
+                                            return true;
+                                        }
+                                    }
+                                    var newCount = 1;
+                                    function addHoverDom(treeId, treeNode) {
+                                    var data_code=treeNode.code;
+                                    var data_pid=treeNode.id;
+
+                                    var sObj = $("#" + treeNode.tId + "_span"); //获取节点信息
+                                    if (treeNode.editNameFlag || $("#addBtn_"+treeNode.tId).length>0)
+                                        return;
+                                    //定义添加按钮
+                                    var addStr = "<span class='button add' id='addBtn_" + treeNode.tId + "' title='add node' onfocus='this.blur();'></span>";
+                                    //加载添加按钮
+                                    sObj.after(addStr);
+                                    var btn = $("#addBtn_"+treeNode.tId);
+                                    //绑定添加事件，并定义添加操作
+                                    if (btn) {
+                                        btn.bind("click", function(e){
+                                            alert(treeNode.id)
+                                            e.stopPropagation();
+                                            //将新节点添加到数据库中
+                                            var name ="newNode1";
+                                            $.ajax({
+                                                url:"{{APP_SERVER}}RoutemapCpeLocation/locationAdd",
+                                                type: "post",
+                                                dataType: "json",
+                                                data: {"pid":data_pid,"code":data_code,"name":name},
+                                                cache: false,
+                                                success: function(data){
+                                                    if(data.code == 0){
+                                                        show_message("success","添加成功",1000);
+                                                        var zTree = $.fn.zTree.getZTreeObj("tree");
+                                                        zTree.addNodes(treeNode, {id:(100 + newCount), pId:treeNode.id, name:"new node" + (newCount++)});
+                                                        return false;
+                                                    }else{
+                                                        if(data.code == 405500){
+                                                            window.location.href = "{{APP_SERVER}}Home/shop"
+                                                        }else{
+                                                            show_message("error",data.msg,1000);
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        });
+                                    }
+                                };
+                                 function removeHoverDom(treeId, treeNode) {
+                                    $("#addBtn_"+treeNode.tId).unbind().remove();
+                                 };
+                                //修改节点
+                                   function showRenameBtn(treeId, treeNode) {
+                                      return !treeNode.isLastNode;
+                                    }
+                                    function onRename(e, treeId, treeNode, isCancel) {
+                                        $.ajax({
+                                            url:"{{APP_SERVER}}RoutemapCpeLocation/locationUpdate",
+                                            type: "post",
+                                            dataType: "json",
+                                            data: {"id":treeNode.id,"name":treeNode.name},
+                                            cache: false,
+                                            success: function(data){
+                                                if(data.code == 0){
+                                                    show_message("success","修改成功",1000)
+                                                }else{
+                                                    if(data.code == 405500){
+                                                        window.location.href = "{{APP_SERVER}}Home/shop"
+                                                    }else{
+                                                        show_message("error","修改错误",1000);
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    }
+
+                                //删除节点
+                                function onRemove(e, treeId, treeNode) {
+                                      console.log(treeNode.id);
+                                       $.ajax({
+                                          url:"{{APP_SERVER}}RoutemapCpeLocation/locationDel",
+                                          type: "post",
+                                          dataType: "json",
+                                          data: {"id":treeNode.id},
+                                          cache: false,
+                                        success: function(data){
+                                            if(data.code == 0){
+                                               show_message("success",data.data,1000)
+                                            }else{
+                                                if(data.code == 405500){
+                                                    window.location.href = "{{APP_SERVER}}Home/shop"
+                                                }else{
+                                                    show_message("error",data.msg,1000);
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+
+                            </script>
+
 
 
 
