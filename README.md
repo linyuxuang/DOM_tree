@@ -1,7 +1,48 @@
 # DOM_tree
-dom树_删除，添加，修改
+dom树_删除，添加，修改  zTree异步加载展开第一级节点及子节点的实现方法
 
 
+* zTree异步加载展开第一级节点的实现方法
+    
+           在 setting 中的 callback 中加上 onAsyncSuccess:onAsyncSuccess 回调函数 , 然后实现回调函数    
+
+                     var isFirst = true;
+                      function onAsyncSuccess(event, treeId) {
+                        if (isFirst) {
+                            //获得树形图对象
+                            var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+                            //获取根节点个数,getNodes获取的是根节点的集合
+                            var nodeList = zTree.getNodes();
+                            //展开第一个根节点
+                            zTree.expandNode(nodeList[0], true);
+                            //当再次点击节点时条件不符合,直接跳出方法
+                            isFirst= false;
+                        }
+                      }
+                      
+
+          zTree获取当前节点的下一级子节点数的实现方法。
+
+                  使用zTree插件实现树形图中，需要获取当前点击的父节点的子节点数的需求，
+                  使用treeNode.children获取子节点数据集合,使用length方法获取集合长度。
+                  
+                      将当前节点的treeNode传入即可调用
+                      
+                      /*查找当前节点下一级的子节点数*/
+                        function findNodes(treeNode)
+                        {
+                          var count;
+                          /*判断是不是父节点,是的话找出子节点个数，加一是为了给新增节点*/
+                          if(treeNode.isParent) {
+                            count = treeNode.children.length + 1 ;
+                          } else {
+                            /*如果不是父节点,说明没有子节点,设置为1*/
+                            count = 1;
+                          }
+                          return count;
+                        }
+
+                  
   1：这个有删除，添加，修改，功能
   
   
